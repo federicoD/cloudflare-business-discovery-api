@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "my-first-worker",
-  "main": "src/index.ts",
+  "main": "./src/index.ts",
   "compatibility_date": "2025-01-09",
   "minify": true,
   "observability": {
