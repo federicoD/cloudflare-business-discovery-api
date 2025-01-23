@@ -5,9 +5,9 @@ import { getCoordinates } from "./utils";
 import { secureHeaders } from "hono/secure-headers";
 import { requestId } from "hono/request-id";
 import { AddBusinessInputModel } from "./dtos/addBusinessInputModel";
-import { Business } from "./dtos/Business";
 import { zValidator } from "@hono/zod-validator";
 import { AddBusinessInputModelSchema, DiscoveryBusinessSchema } from "./dtos/schemas";
+import { Business } from "./dtos/business";
 
 const app = new Hono<{ Bindings: Env }>();
 

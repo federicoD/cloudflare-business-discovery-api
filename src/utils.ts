@@ -1,9 +1,5 @@
 import axios from "axios";
-import { OpenCageResponse } from "./dtos/OpenCageResponse";
-
-export function isNullOrUndefinedOrEmptyOrNotNumber(value: any): boolean {
-    return value === undefined || value === null || value === "" || isNaN(Number(value));
-}
+import { OpenCageResponse } from "./dtos/openCageResponse";
 
 export function roundToDecimals(num: number, decimals: number): number {
     const factor = Math.pow(10, decimals);
