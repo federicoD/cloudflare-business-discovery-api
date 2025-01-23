@@ -1,16 +1,13 @@
 import { Hono } from "hono";
 import { logger } from "hono/logger";
 import { prettyJSON } from "hono/pretty-json";
-import { getCoordinates, isNullOrUndefinedOrEmptyOrNotNumber } from "./utils";
+import { getCoordinates } from "./utils";
 import { secureHeaders } from "hono/secure-headers";
 import { requestId } from "hono/request-id";
-import { AddBusinessInputModel } from "./AddBusinessInputModel";
+import { AddBusinessInputModel } from "./dtos/addBusinessInputModel";
 import { Business } from "./dtos/Business";
-
-/*type Bindings = {
-	firstDb: D1Database;
-	OPEN_CAGE_DATA_API_KEY: string;
-};*/
+import { zValidator } from "@hono/zod-validator";
+import { AddBusinessInputModelSchema, DiscoveryBusinessSchema } from "./dtos/schemas";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -23,25 +20,21 @@ const queryWithoutType = "select *, (6371 * acos(cos(radians(?1)) * cos(radians(
 const queryWithType = "select *, (6371 * acos(cos(radians(?1)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?2)) + sin(radians(?1)) * sin(radians(latitude)))) AS distance from Businesses where type=?4 order by distance asc limit ?3";;
 const insertQuery = "insert into Businesses values (?1, ?2, ?3, ?4, ?5, ?6)";
 
-const defaultLimit: number = 10;
-
-app.get("/api/discovery", async (c) => {
-	try {
-		const { limit, type, lat, long } = c.req.query();
-
-		// TODO: try any validation framework
-		if (isNullOrUndefinedOrEmptyOrNotNumber(lat) || isNullOrUndefinedOrEmptyOrNotNumber(long)) {
-			return c.json({ error: "lat and long are required and must be coordinates" }, 400);
+app.get(
+	"/api/discovery",
+	zValidator("query", DiscoveryBusinessSchema, (result, c) => {
+		if (!result.success) {
+			console.log(`Validation failed: ${result.error}`);
 		}
+	}),
+	async (c) => {
+	try {
+		const { limit = 10, type, lat, long } = c.req.query();
 
 		let userLat = parseFloat(lat);
 		let userLong = parseFloat(long);
-		let userLimit = parseInt(limit) ?? defaultLimit;
+		let userLimit = limit;
 		let userType = null;
-
-		if (userLimit < 0 || userLimit > 100) {
-			userLimit = defaultLimit;
-		}
 
 		if (type !== "" && type !== undefined && type !== null) {
 			userType = type;
@@ -53,8 +46,7 @@ app.get("/api/discovery", async (c) => {
 
 		const queryResult = await queryStatement.run();
 
-		if (!queryResult.success)
-		{
+		if (!queryResult.success) {
 			console.log(`Failure query businesses. Error: ${queryResult}`);
 			return c.json({ error: `Failed to run query` }, 500);
 		}
@@ -65,36 +57,41 @@ app.get("/api/discovery", async (c) => {
 	}
 });
 
-app.post('api/business', requestId(), async (c) => {
-  const input = await c.req.json<AddBusinessInputModel>();
+app.post(
+	"api/business",
+	requestId(),
+	zValidator("json", AddBusinessInputModelSchema, (result, c) => {
+		if (!result.success) {
+			console.log(`Validation failed: ${result.error}`);
+		}
+	}),
+	async (c) => {
+		const input = await c.req.json<AddBusinessInputModel>();
+		const result = await getCoordinates(input.address, c.env.OPEN_CAGE_DATA_API_KEY);
 
-  // TODO: add validation
+		if (!result) {
+			return c.json({ error: 'Coordinates not found' }, 500);
+		}
 
-  const result = await getCoordinates(input.address, c.env.OPEN_CAGE_DATA_API_KEY);
-  if (result) {
+		let business: Business = {
+			id: c.get("requestId"),
+			name: input.name,
+			latitude: result.lat,
+			longitude: result.lng,
+			address: input.address, // TODO: we should check if the address matches result.address
+			type: input.type
+		};
 
-	let business: Business = {
-		id: c.get('requestId'),
-		name: input.name,
-		latitude: result.lat,
-		longitude: result.lng,
-		address: input.address, // check if to use result.address
-		type: input.type
-	};
+		let insertResult = await c.env.firstDb.prepare(insertQuery)
+			.bind(business.id, business.name, business.address, business.latitude, business.longitude, business.type)
+			.run();
 
-	let insertResult = await c.env.firstDb.prepare(insertQuery)
-		.bind(business.id, business.name, business.address, business.latitude, business.longitude, business.type)
-		.run();
+		if (!insertResult.success) {
+			console.log(`Failed inserting new business in the db. Error: ${insertResult} Business: ${business}`);
+			return c.json({ error: "Could not insert the business" }, 500);
+		}
 
-	if (!insertResult.success) {
-		console.log(`Failed inserting new business in the db. Error: ${insertResult} Business: ${business}`);
-		return c.json({ error: "Could not insert the business" }, 500);
-	}
-		
-    return c.json(business);
-  } else {
-    return c.json({ error: 'Could not insert the business' }, 500);
-  }
-});
+		return c.json(business);
+	});
 
 export default app;
