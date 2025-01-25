@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS Customers;
 DROP TABLE IF EXISTS Businesses;
 
 CREATE TABLE Businesses (

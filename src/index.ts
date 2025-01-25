@@ -44,6 +44,7 @@ app.get(
 			c.env.firstDb.prepare(queryWithoutType).bind(userLat, userLong, userLimit) :
 			c.env.firstDb.prepare(queryWithType).bind(userLat, userLong, userLimit, userType);
 
+		// can use generics in run https://developers.cloudflare.com/d1/worker-api/#typescript-support
 		const queryResult = await queryStatement.run();
 
 		if (!queryResult.success) {
