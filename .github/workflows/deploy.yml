@@ -15,6 +15,8 @@ jobs:
         run: npm install
       - name: Build Project
         run: npm run build
+      - name: Run tests
+        run: npm run test
       - name: Deploy with Wrangler
         run: npx wrangler deploy --config ./wrangler.json
         env:
