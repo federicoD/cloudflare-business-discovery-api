@@ -17,9 +17,9 @@ app.use("*", prettyJSON(), logger(), async (c, next) => {
 });
 
 const queryWithoutType = "select *, (6371 * acos(cos(radians(?1)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?2)) + sin(radians(?1)) * sin(radians(latitude)))) AS distance from Businesses order by distance asc limit ?3";
-const queryWithType = "select *, (6371 * acos(cos(radians(?1)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?2)) + sin(radians(?1)) * sin(radians(latitude)))) AS distance from Businesses where type=?4 order by distance asc limit ?3";;
+const queryWithType = "select *, (6371 * acos(cos(radians(?1)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?2)) + sin(radians(?1)) * sin(radians(latitude)))) AS distance from Businesses where type=?4 order by distance asc limit ?3";
 const insertQuery = "insert into Businesses values (?1, ?2, ?3, ?4, ?5, ?6)";
-const searchQuery = "select b.id, b.name, b.description, b.address, b.latitude, b.longitude, b.type FROM Businesses b JOIN BusinessesFTS fts ON b.id = fts.id WHERE BusinessesFTS MATCH ?1;"
+const searchQuery = "select b.id, b.name, b.description, b.address, b.latitude, b.longitude, b.type FROM Businesses b JOIN BusinessesFTS fts ON b.id = fts.id WHERE BusinessesFTS MATCH ?1 limit ?2";
 
 app.get(
 	"/api/discovery",
@@ -70,7 +70,7 @@ app.get(
 			return c.json({ error: "Query is empty"}, 400);
 		}
 
-		const queryResult = await c.env.firstDb.prepare(searchQuery).bind(query).run<Business>();
+		const queryResult = await c.env.firstDb.prepare(searchQuery).bind(query, 10).run<Business>();
 
 		if (!queryResult.success) {
 			console.log(`Failure query businesses. Error: ${queryResult}`);

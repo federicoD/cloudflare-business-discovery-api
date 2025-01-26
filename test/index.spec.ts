@@ -1,20 +1,20 @@
 import { env, createExecutionContext, waitOnExecutionContext, SELF } from 'cloudflare:test';
 import { describe, it, expect } from 'vitest';
 import worker from '../src/index';
+import { Business } from '../src/dtos/business';
 
 describe('Discovery Business', () => {
 	it('responds with a business given limit equals to 1', async () => {
-		const response = await SELF.fetch('http://example.com/api/discovery?lat=-16.070796&long=134.623111&limit=1');
+		const response = await SELF.fetch('http://example.com/api/discovery?lat=-25.630427&long=140.309065&limit=1');
 		
 		expect(response.status).toBe(200);
 		expect(await response.json()).toMatchObject([
 			{
-				"address": "8628 Lori Burg, West Lucas, WY 98475",
-				"distance": 0,
-				"id": "886dd79b-ceea-4cfd-9bf6-9fcf17a776a8",
-				"latitude": -16.070796,
-				"longitude": 134.623111,
-				"name": "Rodriguez Inc",
+				"address": "59963 Diaz Wall Suite 719 Sandrachester, OR 54400",
+				"id": "55178681-8f28-4d96-bb97-67295135d174",
+				"latitude": -25.630427,
+				"longitude": 140.309065,
+				"name": "Barajas Group",
 				"type": "coffee"
 			}
 		]);
@@ -44,6 +44,28 @@ describe('Discovery Business', () => {
 
 	it('responds 400 when long param is not passed', async () => {
 		const response = await SELF.fetch('http://example.com/api/discovery?lat=-16.070796');
+		
+		expect(response.status).toBe(400);
+	});
+});
+
+describe('Search Business', () => {
+	it('responds with 0 businesses when query is not matched', async () => {
+		const response = await SELF.fetch('http://example.com/api/business/search?query=abcdefg');
+		
+		expect(response.status).toBe(200);
+		expect(await response.json()).toMatchObject([]);
+	});
+
+	it('responds with multiple businesses when query is matched', async () => {
+		const response = await SELF.fetch('http://example.com/api/business/search?query=coffee');
+		
+		expect(response.status).toBe(200);
+		expect((await response.json<Business[]>()).length).toBeGreaterThan(0);
+	});
+
+	it('responds 400 when query param is not passed', async () => {
+		const response = await SELF.fetch('http://example.com/api/business/search');
 		
 		expect(response.status).toBe(400);
 	});
