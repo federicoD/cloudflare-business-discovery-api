@@ -19,8 +19,6 @@
 
 ## To add
 
-- search by business name and description?
- - full text search db?
 - reviews / rating?
  - pre-calculated using pub/sub
     - optimistic locking
@@ -29,6 +27,10 @@
 - analytics
 - openapi (https://github.com/rhinobase/hono-openapi)
 - submit business -> approval process with workflows?
+- authentication
+- we can move business/search inside the discovery endpoint
+- split routes in different files
+- use ORM or manage better migrations
 
 ## To read
 
@@ -37,6 +39,10 @@
 - https://developers.cloudflare.com/analytics/analytics-engine/
 - https://developers.cloudflare.com/queues/
 - https://developers.cloudflare.com/workflows/
+
+## Investigate
+
+- got some problems with CHECK(length(field) <= 100) 
 
 
 ## Testing

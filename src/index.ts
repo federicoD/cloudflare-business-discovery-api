@@ -19,6 +19,7 @@ app.use("*", prettyJSON(), logger(), async (c, next) => {
 const queryWithoutType = "select *, (6371 * acos(cos(radians(?1)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?2)) + sin(radians(?1)) * sin(radians(latitude)))) AS distance from Businesses order by distance asc limit ?3";
 const queryWithType = "select *, (6371 * acos(cos(radians(?1)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?2)) + sin(radians(?1)) * sin(radians(latitude)))) AS distance from Businesses where type=?4 order by distance asc limit ?3";;
 const insertQuery = "insert into Businesses values (?1, ?2, ?3, ?4, ?5, ?6)";
+const searchQuery = "select b.id, b.name, b.description, b.address, b.latitude, b.longitude, b.type FROM Businesses b JOIN BusinessesFTS fts ON b.id = fts.id WHERE BusinessesFTS MATCH ?1;"
 
 app.get(
 	"/api/discovery",
@@ -44,8 +45,32 @@ app.get(
 			c.env.firstDb.prepare(queryWithoutType).bind(userLat, userLong, userLimit) :
 			c.env.firstDb.prepare(queryWithType).bind(userLat, userLong, userLimit, userType);
 
-		// can use generics in run https://developers.cloudflare.com/d1/worker-api/#typescript-support
-		const queryResult = await queryStatement.run();
+		const queryResult = await queryStatement.run<Business>();
+
+		if (!queryResult.success) {
+			console.log(`Failure query businesses. Error: ${queryResult}`);
+			return c.json({ error: `Failed to run query` }, 500);
+		}
+
+		return c.json(queryResult.results);
+	} catch (err) {
+		return c.json({ error: `Failed to run query: ${err}` }, 500);
+	}
+});
+
+// TODO: we can move it inside the discovery endpoint
+app.get(
+	"/api/business/search",
+	async (c) => {
+	try {
+		const { query = null } = c.req.query();
+
+		if (query === null || query === "") {
+			console.log(`Query is empty`);
+			return c.json({ error: "Query is empty"}, 400);
+		}
+
+		const queryResult = await c.env.firstDb.prepare(searchQuery).bind(query).run<Business>();
 
 		if (!queryResult.success) {
 			console.log(`Failure query businesses. Error: ${queryResult}`);
@@ -77,6 +102,7 @@ app.post(
 		let business: Business = {
 			id: c.get("requestId"),
 			name: input.name,
+			description: input.description,
 			latitude: result.lat,
 			longitude: result.lng,
 			address: input.address, // TODO: we should check if the address matches result.address
