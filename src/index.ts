@@ -18,7 +18,7 @@ app.use("*", prettyJSON(), logger(), async (c, next) => {
 
 const queryWithoutType = "select *, (6371 * acos(cos(radians(?1)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?2)) + sin(radians(?1)) * sin(radians(latitude)))) AS distance from Businesses order by distance asc limit ?3";
 const queryWithType = "select *, (6371 * acos(cos(radians(?1)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?2)) + sin(radians(?1)) * sin(radians(latitude)))) AS distance from Businesses where type=?4 order by distance asc limit ?3";
-const insertQuery = "insert into Businesses values (?1, ?2, ?3, ?4, ?5, ?6)";
+const insertQuery = "insert into Businesses values (?1, ?2, ?3, ?4, ?5, ?6, ?7)";
 const searchQuery = "select b.id, b.name, b.description, b.address, b.latitude, b.longitude, b.type FROM Businesses b JOIN BusinessesFTS fts ON b.id = fts.id WHERE BusinessesFTS MATCH ?1 limit ?2";
 
 app.get(
@@ -110,7 +110,7 @@ app.post(
 		};
 
 		let insertResult = await c.env.firstDb.prepare(insertQuery)
-			.bind(business.id, business.name, business.address, business.latitude, business.longitude, business.type)
+			.bind(business.id, business.name, business.description, business.address, business.latitude, business.longitude, business.type)
 			.run();
 
 		if (!insertResult.success) {
