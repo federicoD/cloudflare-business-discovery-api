@@ -13,3 +13,7 @@ export const DiscoveryBusinessSchema = z.object({
 	type: z.enum(["restaurant", "coffee"]).optional(),
 	limit: z.coerce.number().gt(0).lte(100).optional()
 });
+
+export const AddReviewInputModelSchema = z.object({
+    score: z.number().min(1).max(5)
+});

@@ -14,5 +14,18 @@
       "database_name": "my-first-database",
       "database_id": "3c65f35c-e9d7-4c10-93e1-cbd62bf4eb49"
     }
-  ]
+  ],
+  "queues": {
+    "producers": [
+      {
+        "queue": "business-reviews",
+        "binding": "businessReviewsQueue"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "business-reviews"
+      }
+    ]
+  }
 }

@@ -6,4 +6,6 @@ export interface Business {
 	type: "restaurant" | "coffee";
 	latitude: number;
 	longitude: number;
+	reviewsScore?: number;
+	updatedOn?: number;
 }
