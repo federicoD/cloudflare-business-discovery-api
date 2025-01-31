@@ -16,12 +16,11 @@
 ### Add secret
 `npx wrangler secret put <KEY>`
 
+### Create queue
+`npx wrangler queues create <MY-QUEUE-NAME>`
 
 ## To add
 
-- reviews / rating?
- - pre-calculated using pub/sub
-    - optimistic locking
 - add review / rating? (from user)
 - get business
 - analytics
@@ -31,6 +30,7 @@
 - we can move business/search inside the discovery endpoint
 - split routes in different files
 - use ORM or manage better migrations
+- improve the code...
 
 ## To read
 
@@ -42,7 +42,12 @@
 
 ## Investigate
 
-- got some problems with CHECK(length(field) <= 100) 
+- got some problems with CHECK(length(field) <= 100)
+
+## Notes
+
+- SQLite does not support ALTER COLUMN SET DEFAULT
+- SQLite does not support ALTER TABLE DROP COLUMN
 
 
 ## Testing

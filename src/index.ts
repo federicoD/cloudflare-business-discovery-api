@@ -24,7 +24,7 @@ const queryWithType = "select *, (6371 * acos(cos(radians(?1)) * cos(radians(lat
 const insertBusinessQuery = "insert into Businesses values (?1, ?2, ?3, ?4, ?5, ?6, ?7)";
 const searchQuery = "select b.id, b.name, b.description, b.address, b.latitude, b.longitude, b.type FROM Businesses b JOIN BusinessesFTS fts ON b.id = fts.id WHERE BusinessesFTS MATCH ?1 limit ?2";
 const insertReviewQuery = "insert into Reviews values (?1, ?2, ?3, ?4)";
-const getReviewsScoreByBusiness = "select avg(score) as avg_score from Reviews where businessId = ?1 and addedOn <= ?2";
+const getReviewsScoreByBusiness = "select avg(score) as avg_score from Reviews where businessId = ?1";
 // TODO: this can be improved
 const updateScoreByBusiness = "update Businesses set reviewsScore=?1, updatedOn=?2 where id=?3 and (updatedOn=?4 or updatedOn is null)";
 const getBusinessQuery = "select * from Businesses where id = ?1";
@@ -212,7 +212,7 @@ export default {
 				}
 
 				const getReviewScoreResult = await env.firstDb.prepare(getReviewsScoreByBusiness)
-					.bind(message.body.businessId, message.body.addedOn)
+					.bind(message.body.businessId)
 					.run();
 
 				let avgScore = Number(getReviewScoreResult.results[0].avg_score).toFixed(2);
@@ -227,6 +227,7 @@ export default {
 					continue;
 				}
 
+				// we use optimistic locking
 				if (updateBusinessScoreResult.meta.rows_written != 0) {
 					break;
 				}
